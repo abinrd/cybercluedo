@@ -1,8 +1,13 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
-import { Analytics } from "@vercel/analytics/next"
+// import { GeistSans } from "geist/font/sans"
+// import { GeistMono } from "geist/font/mono"
+import { Inter } from "next/font/google"
+import { Roboto_Mono } from "next/font/google"
+import { SidebarProvider } from "@/components/ui/sidebar"
+//import { AppSidebar } from "@/components/app-sidebar"
+const GeistSans = Inter({ subsets: ["latin"], variable: "--font-sans" })
+const GeistMono = Roboto_Mono({ subsets: ["latin"], variable: "--font-mono" })
 import { Suspense } from "react"
 import { Footer } from "@/components/footer"
 import "./globals.css"
@@ -22,9 +27,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <Suspense fallback={null}>{children}</Suspense>
+        <Suspense fallback={null}> <SidebarProvider>{children}</SidebarProvider></Suspense>
         <Footer />
-        <Analytics />
       </body>
     </html>
   )
