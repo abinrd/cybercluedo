@@ -28,7 +28,7 @@ useEffect(()=>{
 // eslint-disable-next-line react-hooks/exhaustive-deps
 },[])
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950 relative overflow-hidden">
+    <div className="min-h-full w-full bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950 relative overflow-hidden">
       {/* same decorations */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-20 left-10 w-32 h-32 bg-cyan-400 rounded-full blur-xl animate-pulse"></div>
