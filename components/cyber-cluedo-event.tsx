@@ -5,10 +5,12 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Play, Trophy, Users, MapPin, Calendar } from "lucide-react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 export function CyberCluedoEvent() {
+  const router = useRouter()
   const handleStartEvent = () => {
-    console.log("Starting Cyber Cluedo event...")
+    router.push("/event")
   }
 
   return (
@@ -99,7 +101,7 @@ export function CyberCluedoEvent() {
               className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-4 px-12 text-xl rounded-full shadow-2xl transform hover:scale-105 transition-all duration-300 animate-pulse"
             >
               <Play className="w-6 h-6 mr-3" />
-              START EVENT
+              START NOW
             </Button>
           </Card>
           <div className="text-center">

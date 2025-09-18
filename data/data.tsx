@@ -1,6 +1,7 @@
 "use client"
 
 import { H1, H2, P } from "@/components/typography"
+import { QuizBar } from "@/components/quizbar";
 
 export const DetailedData = {
   employee_list: (
@@ -722,7 +723,7 @@ auth_log: (
     </div>
   </div>
 ),
-
+quiz: <QuizBar />,
 
   // Webserver log
  webserver_log: (
@@ -772,6 +773,7 @@ auth_log: (
               {line}
             </div>
           );
+          
         })}
       </div>
     </div>

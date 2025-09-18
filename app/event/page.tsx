@@ -2,28 +2,31 @@
 import { Input } from "@/components/ui/input"
 import {useRef,useState,useEffect}  from "react";
 import Cookie from "js-cookie";
+import { useRouter } from "next/navigation"
 export default function Start() {
   const [answer,setAnswer] = useState("");
-  
+  const router = useRouter()
 const inputRef = useRef<HTMLInputElement>(null);
 
 const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  setAnswer(e.target.value);
-  if(answer.toUpperCase() === "PROJECT HELIX DESIGN FILES"){
-    alert("Correct Answer! Proceed to the next challenge.");
-    Cookie.set("status","1",{expires:24});
-
+  const value = e.target.value
+  setAnswer(value);
+  if(value.trim().toUpperCase() === "PROJECT HELIX DESIGN FILES"){
+    Cookie.set("status","1",{expires:1});
     if (inputRef.current) {
       inputRef.current.value = "";
     }
+    router.push("/files")
   }
 };
 
 useEffect(()=>{
   if(Cookie.get("status")==="1"){
-    window.location.href="/files";
+    router.replace("/files");
   }
-},[answer])
+// run on mount only
+// eslint-disable-next-line react-hooks/exhaustive-deps
+},[])
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950 relative overflow-hidden">
       {/* same decorations */}
@@ -97,8 +100,8 @@ useEffect(()=>{
 
           <p className="mt-6 text-white/90">Good luck, investigator.</p>
           <br />
-          <label htmlFor="question" className="mt-5 text-white/90 font-semibold">Which File has been leaked to the underground forums ?</label>
-          <Input type="text" placeholder="" ref={inputRef} className="" onChange={handleInputChange}/>
+          <label htmlFor="question" className="mt-5 text-white/90 font-semibold">Which file has been leaked to the underground forums?</label>
+          <Input id="question" type="text" placeholder="Type the exact file name" ref={inputRef} className="mt-2 bg-white/10 text-white placeholder:text-white/60" onChange={handleInputChange}/>
         </article>
       </main>
     </div>
