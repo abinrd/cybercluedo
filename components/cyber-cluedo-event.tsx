@@ -14,7 +14,7 @@ export function CyberCluedoEvent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950 relative overflow-hidden">
+    <div className="min-h-screen w-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950">
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-20 left-10 w-32 h-32 bg-cyan-400 rounded-full blur-xl animate-pulse"></div>
         <div className="absolute top-40 right-20 w-24 h-24 bg-blue-400 rounded-full blur-lg animate-bounce"></div>
@@ -27,15 +27,15 @@ export function CyberCluedoEvent() {
           className="w-full h-full"
           style={{
             backgroundImage: `
-            linear-gradient(rgba(59, 130, 246, 0.3) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(59, 130, 246, 0.3) 1px, transparent 1px)
-          `,
+              linear-gradient(rgba(59, 130, 246, 0.3) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(59, 130, 246, 0.3) 1px, transparent 1px)
+            `,
             backgroundSize: "50px 50px",
           }}
-        ></div>
+        />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
+      <main className="relative z-10 container mx-auto px-4 py-12 min-h-screen flex items-start justify-center">
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex justify-between items-center mb-8 opacity-90">
             <div className="text-white">
@@ -112,7 +112,7 @@ export function CyberCluedoEvent() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
