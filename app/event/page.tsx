@@ -62,7 +62,7 @@ useEffect(()=>{
 
           <h2 className="mt-6 text-xl font-semibold text-white">SITUATION</h2>
           <p className="leading-7 text-white/90 mt-3">
-            NovaTech's proprietary{" "}
+            NovaTech&apos;s proprietary{" "}
             <span
               className="text-red-500 font-bold  px-1 rounded"
               //aria-label="highlighted phrase: Project Helix design files"

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle, XCircle, Trophy, Star, AlertCircle } from "lucide-react"
+import { CheckCircle, XCircle, Trophy, Star } from "lucide-react"
 
 interface QuizAnswer {
   questionId: number;
@@ -229,7 +229,7 @@ export function QuizBar() {
         {/* Evidence Section */}
         <div className="space-y-4">
           <h3 className="text-xl font-bold text-green-300 border-b border-green-500 pb-2">Evidence Found (10 points each)</h3>
-          <p className="text-sm text-gray-400">Enter evidence you've discovered (partial matches accepted)</p>
+          <p className="text-sm text-gray-400">Enter evidence you&apos;ve discovered (partial matches accepted)</p>
           {evidence.map((ev, idx) => (
             <div key={idx} className="flex gap-2">
               <Input

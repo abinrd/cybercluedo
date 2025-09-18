@@ -27,6 +27,43 @@ const EVIDENCE_PATTERNS = [
   'POST /powershell/exec.ps1 HTTP/1.1" 200 642 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
 ]
 
+// Define types for the request data
+interface QuizAnswer {
+  questionId: number;
+  answer: string;
+}
+
+interface ScoreRequest {
+  quizAnswers: QuizAnswer[];
+  evidenceFound: string[];
+}
+
+interface QuestionDetail {
+  correct: boolean;
+  points: number;
+  userAnswer: string;
+  correctAnswer: string;
+}
+
+interface EvidenceDetail {
+  found: boolean;
+  points: number;
+  userInput: string;
+}
+
+interface ScoreDetails {
+  questions: Record<string, QuestionDetail>;
+  evidence: Record<string, EvidenceDetail>;
+}
+
+interface ScoreResponse {
+  totalScore: number;
+  questionScore: number;
+  evidenceScore: number;
+  maxPossible: number;
+  details: ScoreDetails;
+}
+
 // Function to check if evidence text contains the pattern (case insensitive, partial match)
 function checkEvidenceMatch(userInput: string, pattern: string): boolean {
   const normalizedInput = userInput.toLowerCase().trim()
@@ -36,16 +73,17 @@ function checkEvidenceMatch(userInput: string, pattern: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    const { quizAnswers, evidenceFound } = await request.json()
+    const { quizAnswers, evidenceFound }: ScoreRequest = await request.json()
 
     // Calculate question score
     let questionScore = 0
-    const questionDetails: Record<string, any> = {}
+    const questionDetails: Record<string, QuestionDetail> = {}
     
-    quizAnswers.forEach((answer: any) => {
+    quizAnswers.forEach((answer: QuizAnswer) => {
       const correctAnswer = CORRECT_ANSWERS[answer.questionId]
-      const isCorrect = correctAnswer && 
-        answer.answer.trim().toLowerCase() === correctAnswer.toLowerCase()
+      // Ensure we always get a boolean value
+      const isCorrect = Boolean(correctAnswer && 
+        answer.answer.trim().toLowerCase() === correctAnswer.toLowerCase())
       
       if (isCorrect) {
         questionScore += 5
@@ -55,13 +93,13 @@ export async function POST(request: NextRequest) {
         correct: isCorrect,
         points: isCorrect ? 5 : 0,
         userAnswer: answer.answer,
-        correctAnswer: correctAnswer
+        correctAnswer: correctAnswer || "Unknown" // Provide a fallback value
       }
     })
 
     // Calculate evidence score
     let evidenceScore = 0
-    const evidenceDetails: Record<string, any> = {}
+    const evidenceDetails: Record<string, EvidenceDetail> = {}
     
     // Initialize all evidence as not found
     EVIDENCE_PATTERNS.forEach((pattern, index) => {
@@ -102,7 +140,7 @@ export async function POST(request: NextRequest) {
     const totalScore = questionScore + evidenceScore
     const maxPossible = 30 + (EVIDENCE_PATTERNS.length * 10) // 6 questions × 5 + 13 evidence × 10
 
-    return NextResponse.json({
+    const response: ScoreResponse = {
       totalScore,
       questionScore,
       evidenceScore,
@@ -111,7 +149,9 @@ export async function POST(request: NextRequest) {
         questions: questionDetails,
         evidence: evidenceDetails
       }
-    })
+    }
+
+    return NextResponse.json(response)
   } catch (error) {
     console.error('Error calculating score:', error)
     return NextResponse.json(

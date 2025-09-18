@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { MapPin, Phone, Mail, Calendar, ExternalLink } from "lucide-react"
+import { MapPin, Phone, Calendar, ExternalLink } from "lucide-react"
 
 export function Footer() {
   return (
