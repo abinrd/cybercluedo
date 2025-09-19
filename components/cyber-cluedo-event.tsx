@@ -1,17 +1,62 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Play, Trophy, Users, MapPin, Calendar } from "lucide-react"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Play, Trophy, Users, MapPin, Calendar, LogIn, LogOut, UserPlus } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+type Me = { ok: boolean; email?: string | null };
 
 export function CyberCluedoEvent() {
-  const router = useRouter()
+  const router = useRouter();
+  const [me, setMe] = useState<Me | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let done = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/me", { credentials: "include" });
+        const ct = res.headers.get("content-type") || "";
+        if (!res.ok || !ct.includes("application/json")) {
+          setMe({ ok: false, email: null });
+          return;
+        }
+        const data = (await res.json()) as Me;
+        if (!done) setMe(data);
+      } catch {
+        if (!done) setMe({ ok: false, email: null });
+      }
+    })();
+    return () => {
+      done = true;
+    };
+  }, []);
+
   const handleStartEvent = () => {
-    router.push("/event")
-  }
+    router.push("/event");
+  };
+
+  const handleLogin = () => router.push("/auth/login");
+  const handleSignup = () => router.push("/auth/signup");
+
+  const handleLogout = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/logout", { method: "POST", credentials: "include" });
+      if (res.ok) {
+        setMe({ ok: false, email: null });
+        router.refresh();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const authed = !!me?.ok;
 
   return (
     <div className="min-h-screen w-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950">
@@ -41,10 +86,47 @@ export function CyberCluedoEvent() {
             <div className="text-white">
               <div className="text-lg font-bold">CYBER CLUEDO</div>
             </div>
-            <div className="text-white text-right">
-              <div className="text-sm">CY</div>
+            <div className="flex items-center gap-3">
+              {authed ? (
+                <>
+                  {me?.email && (
+                    <span className="text-cyan-200 text-sm hidden sm:inline">{me.email}</span>
+                  )}
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    className="border-red-400/40 text-red-200 hover:bg-red-500/10"
+                    disabled={loading}
+                    title="Logout"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {loading ? "Logging out..." : "Logout"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => window.location.href = "/auth/login"}
+                    variant="outline"
+                    className="border-cyan-400/40 text-cyan-200 hover:bg-cyan-500/10"
+                    title="Login"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Login
+                  </Button>
+                  <Button
+                    onClick={handleSignup}
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+                    title="Sign up"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Sign up
+                  </Button>
+                </>
+              )}
             </div>
           </div>
+
           <Card className="bg-white/10 backdrop-blur-lg border-white/20 p-8 mb-8">
             <div className="relative mb-6">
               <Image
@@ -57,7 +139,9 @@ export function CyberCluedoEvent() {
             </div>
             <div className="mb-6">
               <h1 className="text-6xl font-bold text-white mb-2 tracking-wider">CYBER CLUEDO</h1>
-              <p className="text-2xl text-cyan-300 font-semibold tracking-wide">DIGITAL FORENSICS BOARD GAME</p>
+              <p className="text-2xl text-cyan-300 font-semibold tracking-wide">
+                DIGITAL FORENSICS BOARD GAME
+              </p>
             </div>
             <div className="flex justify-center items-center gap-4 mb-8">
               <Badge variant="outline" className="text-white border-cyan-400 bg-cyan-400/20 px-4 py-2 text-lg">
@@ -79,7 +163,7 @@ export function CyberCluedoEvent() {
                 <div className="text-xl font-bold">₹1500</div>
               </div>
               <div className="flex flex-col items-center text-white">
-                <Calendar className="w-8 h-8 text-yellow-400 mb-2"/>
+                <Calendar className="w-8 h-8 text-yellow-400 mb-2" />
                 <div className="text-sm text-cyan-300">DATE</div>
                 <div className="text-xl font-bold">SEP 20</div>
               </div>
@@ -96,14 +180,15 @@ export function CyberCluedoEvent() {
               </div>
             </div>
             <Button
-              onClick={handleStartEvent}
+              onClick={authed ? handleStartEvent : handleSignup}
               size="lg"
               className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-4 px-12 text-xl rounded-full shadow-2xl transform hover:scale-105 transition-all duration-300 animate-pulse"
             >
               <Play className="w-6 h-6 mr-3" />
-              START NOW
+              {authed ? "START NOW" : "START"}
             </Button>
           </Card>
+
           <div className="text-center">
             <div className="inline-flex items-center gap-2 text-white/80">
               <div className="w-8 h-px bg-gradient-to-r from-transparent to-cyan-400"></div>
@@ -114,5 +199,5 @@ export function CyberCluedoEvent() {
         </div>
       </main>
     </div>
-  )
+  );
 }
