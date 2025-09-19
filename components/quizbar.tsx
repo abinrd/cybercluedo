@@ -27,8 +27,9 @@ const quizQuestions = [
   { id: 2, question: "What is the IP of the person who handles IT security?" },
   { id: 3, question: "Who is the CEO of NovaTech?" },
   { id: 4, question: "What was the complete connection string used for the transfer?"},
-  { id: 5, question: "In the FTP, payload capture what password was used for authentication?"},
+  { id: 5, question: "In the FTP payload capture, what password was used for authentication?"},
   { id: 6, question: "What was the decoded hidden string found in the image provided?"},
+  { id: 7, question: "What is the final flag to complete the challenge? format:FLAG{........}"},
 ]
 
 export function QuizBar() {
@@ -245,7 +246,8 @@ export function QuizBar() {
 
         {/* Evidence Section */}
         <div className="space-y-4">
-          <h3 className="text-xl font-bold text-green-300 border-b border-green-500 pb-2">Evidence Found (10 points each)</h3>
+          <h3 className="text-xl font-bold text-green-300 pb-2">Evidence Found (10 points each)</h3>
+          <p className="text-md font-bold text-green-300 border-b border-green-500 pb-2">(Evidences That Make Your suspect Guilty)</p>
           <p className="text-sm text-gray-400">Enter evidence you&apos;ve discovered (partial matches accepted)</p>
           {evidence.map((ev, idx) => (
             <div key={idx} className="flex gap-2">
