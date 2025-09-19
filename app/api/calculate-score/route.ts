@@ -137,8 +137,9 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    const totalScore = questionScore + evidenceScore
-    const maxPossible = 30 + (EVIDENCE_PATTERNS.length * 10) // 6 questions × 5 + 13 evidence × 10
+    const totalScore = questionScore + evidenceScore;
+    const maxPossible = 30 + (EVIDENCE_PATTERNS.length * 10);
+    localStorage.setItem('socca', totalScore.toString());
 
     const response: ScoreResponse = {
       totalScore,
