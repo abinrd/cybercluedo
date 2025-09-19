@@ -27,7 +27,6 @@ useEffect(()=>{
     router.replace("/files");
   }
     const value = Cookie.get("teamName");
-    console.log("teamname from cookie:",value);
     setTeamName(value || " ");
 // run on mount only
 // eslint-disable-next-line react-hooks/exhaustive-deps

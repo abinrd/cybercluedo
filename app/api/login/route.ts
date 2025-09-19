@@ -43,9 +43,7 @@ export async function POST(req: NextRequest) {
       .select({ name: teams.name })
       .from(teams)
       .where(eq(teams.id, teamRow[0].teamId));
-    console.log('User teams:', teammRow);
     const teamId = teamRow.length > 0 ? teamRow[0].teamId : null;
-    console.log('User name:', teammRow[0]?.name);
     const token = await signSession({
       sub: user.id,
       teamId,
