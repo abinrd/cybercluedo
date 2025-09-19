@@ -1,42 +1,46 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
+import type React from "react";
+import { useState } from "react";
+import Cookies from "js-cookie";
 
 export default function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [msg, setMsg] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setMsg(null)
+    e.preventDefault();
+    setLoading(true);
+    setMsg(null);
     try {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ email, password }),
-      })
+      });
 
-      const ct = res.headers.get("content-type") || ""
+      const ct = res.headers.get("content-type") || "";
       if (!res.ok || !ct.includes("application/json")) {
-        const text = await res.text()
-        throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`)
+        const text = await res.text();
+        throw new Error(`Login Failed btww..`);
       }
 
-      const data = await res.json()
+      const data = await res.json();
+
       setMsg(`Welcome! team`);
-      window.location.href = '/';
+      // Keep team info in non-sensitive cookies if needed; session token should remain httpOnly on the server
+      Cookies.set("teamId", data.teamId);
+      Cookies.set("teamName", data.name);
+      window.location.href = "/";
     } catch (err: any) {
-      setMsg(err.message || "Login failed")
+      setMsg(err.message || "Login failed");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen min-w-screen bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-900 flex items-center justify-center p-4">
@@ -51,6 +55,19 @@ export default function LoginForm() {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-white mb-2">Login</h2>
             <p className="text-blue-200">Access your Asthra 10.0 account</p>
+          </div>
+
+        {/* Team size rule hint + CTA */}
+          <div className="mb-4 text-center">
+            <p className="text-cyan-200 text-sm">
+              Team size: minimum 1 and maximum 4 including the owner
+            </p>
+            <a
+              href="/auth/signup"
+              className="inline-block mt-2 text-cyan-300 hover:text-cyan-200 font-medium transition-colors underline"
+            >
+              Create a team (owner-only or up to 3 more)
+            </a>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-6">
@@ -108,8 +125,8 @@ export default function LoginForm() {
 
           <div className="mt-6 text-center">
             <p className="text-blue-200 text-sm">
-              Don't have an account?{" "}
-              <a href="#" className="text-cyan-300 hover:text-cyan-200 font-medium transition-colors">
+              Don&apos;t have an account?{" "}
+              <a href="/auth/signup" className="text-cyan-300 hover:text-cyan-200 font-medium transition-colors">
                 Sign up here
               </a>
             </p>
@@ -117,5 +134,5 @@ export default function LoginForm() {
         </div>
       </div>
     </div>
-  )
+  );
 }

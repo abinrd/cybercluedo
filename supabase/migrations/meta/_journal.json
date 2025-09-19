@@ -15,6 +15,13 @@
       "when": 1758292078167,
       "tag": "0001_spotty_maginty",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1758301453232,
+      "tag": "0002_petite_alice",
+      "breakpoints": true
     }
   ]
 }

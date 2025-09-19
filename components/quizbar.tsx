@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, XCircle, Trophy, Star } from "lucide-react"
-
+import Cookies from "js-cookie";
 interface QuizAnswer {
   questionId: number;
   answer: string;
@@ -35,14 +35,16 @@ export function QuizBar() {
   const [answers, setAnswers] = useState<string[]>(Array(quizQuestions.length).fill(""))
   const [evidence, setEvidence] = useState<string[]>([""])
   const [submitted, setSubmitted] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
-
+  const [finalSubmitted, setFinalSubmitted] = useState("")
   const handleQuizChange = (index: number, value: string) => {
     const newAnswers = [...answers]
     newAnswers[index] = value
     setAnswers(newAnswers)
   }
+
+
 
   const handleEvidenceChange = (index: number, value: string) => {
     const newEvidence = [...evidence]
@@ -66,6 +68,7 @@ export function QuizBar() {
       alert("Please answer all questions before submitting.")
       return
     }
+
 
     setIsSubmitting(true)
     
@@ -92,6 +95,8 @@ export function QuizBar() {
         const result: ScoreResult = await response.json()
         setScoreResult(result)
         setSubmitted(true)
+        Cookies.set('finalSubmitted', 'true');
+        setFinalSubmitted(Cookies.get('finalSubmitted')|| " ");
       } else {
         throw new Error('Failed to calculate score')
       }
@@ -99,10 +104,13 @@ export function QuizBar() {
       console.error('Error submitting quiz:', error)
       alert('Error submitting quiz. Please try again.')
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
+
     }
   }
-
+  useEffect(() => {
+    setFinalSubmitted(Cookies.get('finalSubmitted') || "");
+  }, [finalSubmitted]);
   const calculatePercentage = (score: number, max: number) => {
     return Math.round((score / max) * 100)
   }
@@ -165,9 +173,9 @@ export function QuizBar() {
                     )}
                     <div>
                       <p className="font-medium">Q{questionId}: {detail.correct ? "+5" : "0"}</p>
-                      {!detail.correct && (
+                      {/* {!detail.correct && (
                         <p className="text-sm text-gray-400">Correct answer: {detail.correctAnswer}</p>
-                      )}
+                      )} */}
                     </div>
                   </div>
                 ))}
@@ -199,7 +207,14 @@ export function QuizBar() {
 
   return (
     <div className="space-y-6 bg-black/30 p-6 rounded-lg border border-blue-500/30 text-white">
-      <form
+      {finalSubmitted === "true" ? (
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-yellow-400 mb-2">You have already submitted the quiz!</h2>
+          <p className="text-lg">Thank you for your participation.</p>
+        </div>
+      ) : (
+        <>
+        <form
         onSubmit={(e) => {
           e.preventDefault()
           handleSubmit()
@@ -269,6 +284,8 @@ export function QuizBar() {
           {isSubmitting ? "Calculating Score..." : "Submit Quiz & Evidence"}
         </Button>
       </form>
+        </>
+      )}
     </div>
   )
 }

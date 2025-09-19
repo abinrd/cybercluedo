@@ -28,11 +28,13 @@
   export default function Files() {
     const [hoveredItem, setHoveredItem] = React.useState<string | null>(null)
     const [selectedItem, setSelectedItem] = React.useState<string | null>(null)
-
+    const [teamname,setTeamName] = React.useState("");
     React.useEffect(() => {
       if (!Number(Cookies.get("status"))) {
         window.location.href = "/event"
       }
+      const value = Cookies.get("teamName");
+      setTeamName(value || " ");
     }, [])
 
     const handleDownload = () => {
@@ -199,7 +201,7 @@
               <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
                 <SidebarTrigger className="-ml-1" />
                 <div className="h-4 w-px bg-sidebar-border mx-2" />
-                <h1 className="text-lg font-semibold">File Management System</h1>
+                <h1 className="text-lg font-semibold">File Management System  --Team: {teamname}</h1>
               </header>
 
               {/* Content */}

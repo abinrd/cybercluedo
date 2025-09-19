@@ -7,34 +7,20 @@ import { Play, Trophy, Users, MapPin, Calendar, LogIn, LogOut, UserPlus } from "
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-type Me = { ok: boolean; email?: string | null };
-
+import Cookies from "js-cookie";
 export function CyberCluedoEvent() {
   const router = useRouter();
-  const [me, setMe] = useState<Me | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let done = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/me", { credentials: "include" });
-        const ct = res.headers.get("content-type") || "";
-        if (!res.ok || !ct.includes("application/json")) {
-          setMe({ ok: false, email: null });
-          return;
-        }
-        const data = (await res.json()) as Me;
-        if (!done) setMe(data);
-      } catch {
-        if (!done) setMe({ ok: false, email: null });
-      }
-    })();
-    return () => {
-      done = true;
-    };
+  const [auth, setAuth] = useState(false);
+    useEffect(() => {
+    const teamId = Cookies.get('teamId');
+    if (teamId) {
+      setAuth(true);
+    } else {
+      setAuth(false);
+    }
   }, []);
+
 
   const handleStartEvent = () => {
     router.push("/event");
@@ -46,17 +32,20 @@ export function CyberCluedoEvent() {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/logout", { method: "POST", credentials: "include" });
-      if (res.ok) {
-        setMe({ ok: false, email: null });
-        router.refresh();
+      Cookies.remove('teamId');
+      Cookies.remove('teamName');
+      Cookies.remove('status');
+      Cookies.remove('score');
+      Cookies.remove('userId');
+      Cookies.remove('session');
+      Cookies.remove('finalSubmitted');
+      window.location.href = '/auth/login';
       }
-    } finally {
+     finally {
       setLoading(false);
     }
   };
 
-  const authed = !!me?.ok;
 
   return (
     <div className="min-h-screen w-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950">
@@ -87,11 +76,8 @@ export function CyberCluedoEvent() {
               <div className="text-lg font-bold">CYBER CLUEDO</div>
             </div>
             <div className="flex items-center gap-3">
-              {authed ? (
+              {auth && (
                 <>
-                  {me?.email && (
-                    <span className="text-cyan-200 text-sm hidden sm:inline">{me.email}</span>
-                  )}
                   <Button
                     onClick={handleLogout}
                     variant="outline"
@@ -103,7 +89,8 @@ export function CyberCluedoEvent() {
                     {loading ? "Logging out..." : "Logout"}
                   </Button>
                 </>
-              ) : (
+)}
+              { !auth && (
                 <>
                   <Button
                     onClick={() => window.location.href = "/auth/login"}
@@ -124,6 +111,7 @@ export function CyberCluedoEvent() {
                   </Button>
                 </>
               )}
+                
             </div>
           </div>
 
@@ -180,12 +168,12 @@ export function CyberCluedoEvent() {
               </div>
             </div>
             <Button
-              onClick={authed ? handleStartEvent : handleSignup}
+              onClick={auth ? handleStartEvent : handleSignup}
               size="lg"
               className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-4 px-12 text-xl rounded-full shadow-2xl transform hover:scale-105 transition-all duration-300 animate-pulse"
             >
               <Play className="w-6 h-6 mr-3" />
-              {authed ? "START NOW" : "START"}
+              {auth ? "START NOW" : "START"}
             </Button>
           </Card>
 

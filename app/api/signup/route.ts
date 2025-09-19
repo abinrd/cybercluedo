@@ -1,16 +1,17 @@
+// app/api/team-signup/route.ts
 import { NextResponse, NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { users, teams, teamMembers } from '@/supabase/migrations/schema';
+import { users, teams, teamMembers } from '@/supabase/migrations/schema'; 
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { SignJWT } from 'jose';
 import crypto from 'crypto';
-
+import Cookies from 'js-cookie';
 type MemberInput = { name: string; email: string };
 type Body = {
   teamName: string;
   owner: { name: string; email: string; password: string };
-  members: MemberInput[]; // must be exactly 2 entries
+  members: MemberInput[]; 
 };
 
 const JWT_TTL_SEC = 60 * 60 * 24 * 7; // 7 days
@@ -31,18 +32,24 @@ export async function POST(req: NextRequest) {
       !body?.owner?.email ||
       !body?.owner?.password ||
       !Array.isArray(body.members) ||
-      body.members.length !== 2 ||
+      body.members.length > 4 ||
       body.members.some((m) => !m.name || !m.email)
     ) {
-      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid payload (team must have 1 to 5 members including owner)' },
+        { status: 400 }
+      );
     }
 
-    const hash = await bcrypt.hash(body.owner.password, 12);
+    {
+      const emails = [body.owner.email.toLowerCase(), ...body.members.map((m) => m.email.toLowerCase())];
+      const uniq = new Set(emails);
+      if (uniq.size !== emails.length) {
+        return NextResponse.json({ error: 'Duplicate emails in team' }, { status: 400 });
+      }
+    }
 
-    const temp1 = crypto.randomBytes(32).toString('hex');
-    const temp2 = crypto.randomBytes(32).toString('hex');
-    const tempHash1 = await bcrypt.hash(temp1, 12);
-    const tempHash2 = await bcrypt.hash(temp2, 12);
+    const ownerHash = await bcrypt.hash(body.owner.password, 12);
 
     const now = new Date().toISOString();
     let ownerId: string | null = null;
@@ -58,13 +65,12 @@ export async function POST(req: NextRequest) {
       if (existingOwner.length > 0) {
         throw new Error('Owner email already registered');
       }
-
       const [ownerRow] = await tx
         .insert(users)
         .values({
           name: body.owner.name,
           email: body.owner.email,
-          password: hash,
+          password: ownerHash,
           createdAt: now,
         })
         .returning({ id: users.id });
@@ -72,7 +78,7 @@ export async function POST(req: NextRequest) {
       ownerId = ownerRow.id;
 
       const memberIds: string[] = [];
-      for (const [i, m] of body.members.entries()) {
+      for (const m of body.members) {
         const existing = await tx
           .select({ id: users.id })
           .from(users)
@@ -82,7 +88,9 @@ export async function POST(req: NextRequest) {
         if (existing.length > 0) {
           memberIds.push(existing[0].id);
         } else {
-          const tempHash = i === 0 ? tempHash1 : tempHash2;
+          const temp = crypto.randomBytes(32).toString('hex');
+          const tempHash = await bcrypt.hash(temp, 12);
+
           const [row] = await tx
             .insert(users)
             .values({
@@ -106,7 +114,6 @@ export async function POST(req: NextRequest) {
         .returning({ id: teams.id });
 
       teamId = teamRow.id;
-
       await tx.insert(teamMembers).values({
         teamId: teamId!,
         userId: ownerId!,
@@ -122,10 +129,12 @@ export async function POST(req: NextRequest) {
           joinedAt: now,
         });
       }
+
     });
+
     const jwtSecret = new TextEncoder().encode(requireEnv('JWT_SECRET'));
     const token = await new SignJWT({
-      sub: ownerId || "",
+      sub: ownerId || '',
       teamId,
       email: body.owner.email,
       role: 'owner',
@@ -143,18 +152,34 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
+        const rows = await db
+          .select({ id: users.id, email: users.email, password: users.password })
+          .from(users)
+          .where(eq(users.email, body.owner.email))
+          .limit(1);
+    
+        if (rows.length === 0) {
+          return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+        }
+        const user = rows[0];
+    const teamRow = await db
+      .select({ teamId: teamMembers.teamId })
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, user.id))
+      .limit(1);
+    const teammRow = await db
+      .select({ name: teams.name })
+      .from(teams)
+      .where(eq(teams.id, teamRow[0].teamId));
+    console.log('User teams:', teammRow);
+    const temid = teamRow.length > 0 ? teamRow[0].teamId : null;
+    Cookies.set("teamId", temid || "");
+    Cookies.set("teamName", teammRow[0]?.name || "");
 
-    res.cookies.set('session', token, {
-      httpOnly: true,
-      path: '/',
-      sameSite: 'lax',
-      secure: true,
-      maxAge: JWT_TTL_SEC,
-    });
 
     return res;
   } catch (err: any) {
-    console.error('Team signup error:', err); // shows cause and stack
+    console.error('Team signup error:', err);
     const detail = err?.cause?.message || err?.message || 'Signup failed';
     return NextResponse.json({ error: detail }, { status: 400 });
   }

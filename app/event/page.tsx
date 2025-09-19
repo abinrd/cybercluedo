@@ -5,6 +5,7 @@ import Cookie from "js-cookie";
 import { useRouter } from "next/navigation"
 export default function Start() {
   const [answer,setAnswer] = useState("");
+  const [teamname,setTeamName] = useState("");
   const router = useRouter()
 const inputRef = useRef<HTMLInputElement>(null);
 
@@ -24,6 +25,9 @@ useEffect(()=>{
   if(Cookie.get("status")==="1"){
     router.replace("/files");
   }
+    const value = Cookie.get("teamName");
+    console.log("teamname from cookie:",value);
+    setTeamName(value || " ");
 // run on mount only
 // eslint-disable-next-line react-hooks/exhaustive-deps
 },[])
@@ -38,6 +42,7 @@ useEffect(()=>{
       </div>
 
       <div className="absolute inset-0 opacity-10">
+        
         <div
           className="w-full h-full"
           style={{
@@ -51,6 +56,7 @@ useEffect(()=>{
       </div>
 
       <main className="relative z-10 container mx-auto px-4 py-12 min-h-screen flex items-start justify-center">
+        <p className="text-white absolute top-4">{teamname}</p>
         <article className="w-full max-w-3xl bg-white/5 border border-white/8 rounded-2xl p-8 shadow-sm">
           <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-white">OPERATION HELIX BREACH - CYBERSECURITY INVESTIGATION</h1>
 
