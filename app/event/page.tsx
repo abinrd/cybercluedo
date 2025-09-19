@@ -17,7 +17,8 @@ const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (inputRef.current) {
       inputRef.current.value = "";
     }
-    router.push("/files")
+    router.push("/files");
+    void answer;
   }
 };
 

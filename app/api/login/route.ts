@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 import { users, teamMembers, teams } from '@/supabase/migrations/schema'; 
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
-import { signSession, SESSION_COOKIE, JWT_TTL_SEC } from '@/lib/auth';
+import { signSession, SESSION_COOKIE} from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {

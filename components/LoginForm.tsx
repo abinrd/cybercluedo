@@ -25,6 +25,7 @@ export default function LoginForm() {
       const ct = res.headers.get("content-type") || "";
       if (!res.ok || !ct.includes("application/json")) {
         const text = await res.text();
+        void text;
         throw new Error(`Login Failed btww..`);
       }
 

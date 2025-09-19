@@ -1,6 +1,8 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect,  } from "react"
+import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -12,61 +14,59 @@ interface Team {
   id: string
   name: string
   points: number
-  submissionTime: number // in minutes from start
-  status: 'active' | 'completed' | 'failed'
-  
+  submitedTime: any 
+  final: '1' | '0'
+
 }
-
 // Mock data - replace with actual API call
-const mockTeams: Team[] = [
-  {
-    id: "T001",
-    name: "Cyber Hawks",
-    points: 100,
-    submissionTime: 23,
-    status: 'completed',
+// const mockTeams: Team[] = [
+//   {
+//     id: "T001",
+//     name: "Cyber Hawks",
+//     points: 100,
+//     submissionTime: 23,
+//     status: 'completed',
 
-  },
-  {
-    id: "T002", 
-    name: "Digital Forensics Unit",
-    points: 85,
-    submissionTime: 31,
-    status: 'completed',
- 
-  },
-  {
-    id: "T003",
-    name: "Network Defenders",
-    points: 45,
-    submissionTime: 0,
-    status: 'active',
-   
-  },
-  {
-    id: "T004",
-    name: "Security Analysts",
-    points: 30,
-    submissionTime: 0,
-    status: 'active', 
+//   },
+//   {
+//     id: "T002", 
+//     name: "Digital Forensics Unit",
+//     points: 85,
+//     submissionTime: 31,
+//     status: 'completed',
 
-  },
-  {
-    id: "T005",
-    name: "Threat Hunters",
-    points: 0,
-    submissionTime: 0,
-    status: 'failed',
-  }
-]
+//   },
+//   {
+//     id: "T003",
+//     name: "Network Defenders",
+//     points: 45,
+//     submissionTime: 0,
+//     status: 'active',
+
+//   },
+//   {
+//     id: "T004",
+//     name: "Security Analysts",
+//     points: 30,
+//     submissionTime: 0,
+//     status: 'active', 
+
+//   },
+//   {
+//     id: "T005",
+//     name: "Threat Hunters",
+//     points: 0,
+//     submissionTime: 0,
+//     status: 'failed',
+//   }
+// ]
 
 export default function AdminDashboard() {
-  const [teams, setTeams] = useState<Team[]>(mockTeams)
+  const [teams, setTeams] = useState<Team[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [eventStartTime] = useState(new Date('2025-09-19T14:00:00'))
   const [currentTime, setCurrentTime] = useState(new Date())
 
-  // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date())
@@ -74,18 +74,15 @@ export default function AdminDashboard() {
     return () => clearInterval(timer)
   }, [])
 
-  // Function to fetch data from backend
   const fetchTeamData = async () => {
     setIsLoading(true)
     try {
-      // Replace with actual API endpoint
-      // const response = await fetch('/api/admin/teams')
-      // const data = await response.json()
-      // setTeams(data)
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setTeams([...mockTeams]) // Refresh with mock data
+      const response = await fetch('/api/data?code=abinrajuisgreat')
+      if (!response.ok) {
+        throw new Error('Failed to fetch team data')
+      }
+      const data = await response.json()
+      setTeams(data)
     } catch (error) {
       console.error('Failed to fetch team data:', error)
     } finally {
@@ -96,42 +93,56 @@ export default function AdminDashboard() {
   // Sort teams by points (descending) and then by submission time (ascending)
   const sortedTeams = [...teams].sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points
-    if (a.status === 'completed' && b.status === 'completed') {
-      return a.submissionTime - b.submissionTime
+    if (a.final === '1' && b.final === '1') {
+      return a.submitedTime - b.submitedTime;
     }
     return 0
   })
 
-  const getStatusBadge = (status: Team['status']) => {
+  const getStatusBadge = (status: Team['final']) => {
     const variants = {
-      'completed': 'default',
-      'active': 'secondary', 
-      'failed': 'destructive'
+      '1': 'default',
+      '0': 'secondary',
     } as const
-    
+
     const labels = {
-      'completed': 'MISSION COMPLETE',
-      'active': 'INVESTIGATING',
-      'failed': 'COMPROMISED'
+      '1': 'MISSION COMPLETE',
+      '0': 'INVESTIGATING',
     }
 
     return <Badge variant={variants[status]}>{labels[status]}</Badge>
   }
 
-  const formatTime = (minutes: number) => {
-    if (minutes === 0) return '-'
-    return `${minutes}m`
-  }
+  
 
   const getElapsedTime = () => {
     const elapsed = Math.floor((currentTime.getTime() - eventStartTime.getTime()) / (1000 * 60))
     return Math.max(0, elapsed)
   }
 
-  const activeTeams = teams.filter(t => t.status === 'active').length
-  const completedTeams = teams.filter(t => t.status === 'completed').length
-  const compromisedTeams = teams.filter(t => t.status === 'failed').length
+  const activeTeams = teams.filter(t => t.final === '0').length
+  const completedTeams = teams.filter(t => t.final === '1').length
+  // const compromisedTeams = teams.filter(t => t.status === 'failed').length
+  const searchParams = useSearchParams();
+  const code = searchParams.get("code");
+  if(code!="abinrajuisgreat") {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 flex items-center justify-center p-4">
+        <Card className="bg-slate-800/50 border-slate-700 max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="text-white text-center">ACCESS DENIED</CardTitle>
+            <CardDescription className="text-slate-400 text-center">
+              You do not have permission to view this page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <AlertTriangle className="mx-auto mb-4 text-red-500" />
+          </CardContent>
+        </Card>
+      </div>
 
+    )
+  }else{
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 relative overflow-hidden">
       {/* Background decorations */}
@@ -162,12 +173,12 @@ export default function AdminDashboard() {
             <div>
               <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                 <Shield className="h-8 w-8 text-red-500" />
-                CYa - COMMAND CENTER
+                CY:CLUEDO - ADMIN
               </h1>
-              <p className="text-slate-400 mt-2">CYa Cybersecurity Investigation Dashboard</p>
+              <p className="text-slate-400 mt-2">CYBER CLUEDO ADMIN PANEL</p>
             </div>
-            <Button 
-              onClick={fetchTeamData} 
+            <Button
+              onClick={fetchTeamData}
               disabled={isLoading}
               className="bg-red-600 hover:bg-red-700"
             >
@@ -182,7 +193,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-slate-400">ACTIVE INVESTIGATIONS</CardTitle>
@@ -207,17 +218,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">COMPROMISED UNITS</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                <span className="text-2xl font-bold text-white">{compromisedTeams}</span>
-              </div>
-            </CardContent>
-          </Card>
+    
 
           <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader className="pb-2">
@@ -270,15 +271,18 @@ export default function AdminDashboard() {
                     <TableCell className="text-slate-300 font-mono">{team.id}</TableCell>
                     <TableCell className="text-white font-medium">{team.name}</TableCell>
                     <TableCell className="text-white font-bold text-lg">{team.points}</TableCell>
-                    <TableCell className="text-slate-300">{formatTime(team.submissionTime)}</TableCell>
-                    <TableCell>{getStatusBadge(team.status)}</TableCell>
+                    <TableCell className="text-slate-300">
+                      {team.submitedTime?.split(" ")[1].split("+")[0] ?? ""}
+                    </TableCell>
+
+                    <TableCell>{getStatusBadge(team.final)}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        
+
                       </div>
                     </TableCell>
                     <TableCell className="text-slate-400 text-sm font-mono">
-                     
+
                     </TableCell>
                   </TableRow>
                 ))}
@@ -289,4 +293,5 @@ export default function AdminDashboard() {
       </div>
     </div>
   )
+}
 }

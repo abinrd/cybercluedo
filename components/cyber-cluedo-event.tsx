@@ -26,7 +26,7 @@ export function CyberCluedoEvent() {
     router.push("/event");
   };
 
-  const handleLogin = () => router.push("/auth/login");
+  // const handleLogin = () => router.push("/auth/login");
   const handleSignup = () => router.push("/auth/signup");
 
   const handleLogout = async () => {

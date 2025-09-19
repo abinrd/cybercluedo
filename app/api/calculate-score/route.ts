@@ -173,6 +173,7 @@ export async function POST(request: NextRequest) {
         .set({
           points: totalScore.toString(),
           final: "1",
+          submitedTime: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Kolkata" })
         })
         .where(eq(teams.id, teamId));
         await Cookies.set('finalSubmitted', "true");

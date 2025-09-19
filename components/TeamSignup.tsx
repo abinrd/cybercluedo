@@ -56,15 +56,18 @@ export default function TeamSignup() {
             const ct = res.headers.get('content-type') || '';
             if (!res.ok) {
                 const text = await res.text();
+                void text;
                 throw new Error(`Signup failed`);
             }
             if (!ct.includes('application/json')) {
                 const text = await res.text();
+                void text;
                 throw new Error("server side issue");
             }
 
             const data = await res.json();
             setMsg(`Success! Team created. You can now log in.`);
+            void data;
             window.location.href = '/';
         } catch (err: any) {
             setMsg(err.message || "Error")

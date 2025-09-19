@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
       .setIssuedAt()
       .setExpirationTime(`${JWT_TTL_SEC} sec`)
       .sign(jwtSecret);
-
+    void token;
     const res = NextResponse.json(
       {
         teamId,
