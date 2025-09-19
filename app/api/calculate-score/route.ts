@@ -10,7 +10,8 @@ const CORRECT_ANSWERS: Record<number, string> = {
   3: "Sarah Mitchell",
   4: "ftp://192.168.1.45:21/",
   5: "novatech2025",
-  6: "Project_Helix_Pass:access_2025"
+  6: "Project_Helix_Pass:access_2025",
+  7: "FLAG{Helix_Breach_Solved_By_Cyber_Detective}"
 }
 
 // Evidence patterns to match against (partial matching)

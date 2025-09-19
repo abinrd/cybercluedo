@@ -35,8 +35,12 @@ export default function LoginForm() {
       Cookies.set("teamId", data.teamId);
       Cookies.set("teamName", data.name);
       window.location.href = "/";
-    } catch (err: any) {
-      setMsg(err.message || "Login failed");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setMsg(err.message || "Login failed");
+      } else {
+        setMsg("Login failed")
+      }
     } finally {
       setLoading(false);
     }

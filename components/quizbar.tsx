@@ -27,8 +27,9 @@ const quizQuestions = [
   { id: 2, question: "What is the IP of the person who handles IT security?" },
   { id: 3, question: "Who is the CEO of NovaTech?" },
   { id: 4, question: "What was the complete connection string used for the transfer?"},
-  { id: 5, question: "In the FTP, payload capture what password was used for authentication?"},
+  { id: 5, question: "In the FTP payload capture, what password was used for authentication?"},
   { id: 6, question: "What was the decoded hidden string found in the image provided?"},
+  { id: 7, question: "What is the final flag to complete the challenge? format:FLAG{........}"},
 ]
 
 export function QuizBar() {
@@ -173,9 +174,8 @@ export function QuizBar() {
                     )}
                     <div>
                       <p className="font-medium">Q{questionId}: {detail.correct ? "+5" : "0"}</p>
-                      {/* {!detail.correct && (
-                        <p className="text-sm text-gray-400">Correct answer: {detail.correctAnswer}</p>
-                      )} */}
+                      
+  
                     </div>
                   </div>
                 ))}
@@ -184,21 +184,39 @@ export function QuizBar() {
 
             <div>
               <h4 className="font-semibold text-blue-300 mb-2">Evidence Found:</h4>
-              <div className="space-y-2">
-                {Object.entries(scoreResult.details.evidence).map(([evidenceId, detail]) => (
-                  <div key={evidenceId} className="flex items-start p-2 bg-gray-800/50 rounded">
-                    {detail.found ? (
-                      <CheckCircle className="h-5 w-5 text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+
+              {(() => {
+                const evidenceEntries = Object.values(scoreResult.details.evidence || {});
+                const foundCount = evidenceEntries.filter(d => d.found).length;
+                const totalCount = evidenceEntries.length;
+                // If detail.points exists use it, otherwise default to 10 per found evidence
+                const totalPoints = evidenceEntries.reduce(
+                  (sum, d) => sum + (d.found ? (typeof d.points === "number" ? d.points : 10) : 0),
+                  0
+                );
+
+                return (
+                  <div className="p-3 bg-gray-800/50 rounded flex items-center space-x-3">
+                    {foundCount > 0 ? (
+                      <CheckCircle className="h-6 w-6 text-green-400 flex-shrink-0" />
                     ) : (
-                      <XCircle className="h-5 w-5 text-red-400 mr-2 flex-shrink-0 mt-0.5" />
+                      <XCircle className="h-6 w-6 text-red-400 flex-shrink-0" />
                     )}
+
                     <div>
-                      <p className="font-medium">Evidence {evidenceId}: {detail.found ? "+10" : "0"}</p>
+                      <p className="font-medium">
+                        You found <span className="text-white">{foundCount}</span> of{" "}
+                        <span className="text-white">{totalCount}</span> evidences.
+                      </p>
+                      <p className="text-sm text-blue-200/90">
+                        Total points: <span className="font-semibold">{totalPoints}</span>
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </div>
+
           </div>
         </div>
       </div>
@@ -243,7 +261,8 @@ export function QuizBar() {
 
         {/* Evidence Section */}
         <div className="space-y-4">
-          <h3 className="text-xl font-bold text-green-300 border-b border-green-500 pb-2">Evidence Found (10 points each)</h3>
+          <h3 className="text-xl font-bold text-green-300 pb-2">Evidence Found (10 points each)</h3>
+          <p className="text-md font-bold text-green-300 border-b border-green-500 pb-2">(Evidences That Make Your suspect Guilty)</p>
           <p className="text-sm text-gray-400">Enter evidence you&apos;ve discovered (partial matches accepted)</p>
           {evidence.map((ev, idx) => (
             <div key={idx} className="flex gap-2">

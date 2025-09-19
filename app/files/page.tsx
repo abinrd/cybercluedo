@@ -38,7 +38,7 @@
     }, [])
 
     const handleDownload = () => {
-      window.location.href = "https://github.com/abinrd/cybercluedo/raw/refs/heads/main/Phase1.zip"
+      window.location.href = "https://github.com/abinrd/cybercluedo/raw/refs/heads/main/public/NovaTechFiles.zip"
       console.log("Download initiated")
     }
 
