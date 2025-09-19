@@ -31,8 +31,12 @@ export default function LoginForm() {
       const data = await res.json()
       setMsg(`Welcome! team`);
       window.location.href = '/';
-    } catch (err: any) {
-      setMsg(err.message || "Login failed")
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setMsg(err.message || "Login failed")
+      } else {
+        setMsg("Login failed")
+      }
     } finally {
       setLoading(false)
     }
@@ -108,7 +112,7 @@ export default function LoginForm() {
 
           <div className="mt-6 text-center">
             <p className="text-blue-200 text-sm">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <a href="#" className="text-cyan-300 hover:text-cyan-200 font-medium transition-colors">
                 Sign up here
               </a>

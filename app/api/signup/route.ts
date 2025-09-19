@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import { NextResponse, NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { users, teams, teamMembers } from '@/supabase/migrations/schema';
