@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, uuid, timestamp, text, unique, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, uuid, timestamp, text, numeric, unique, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -8,9 +8,9 @@ export const teams = pgTable("teams", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	name: text().notNull(),
 	ownerId: uuid("owner_id").notNull(),
-	points: text().default('0').notNull(),
 	final: text().default('0').notNull(),
 	submitedTime: timestamp("submited_time", { withTimezone: true, mode: 'string' }),
+	points: numeric().default('0'),
 }, (table) => [
 	foreignKey({
 			columns: [table.ownerId],

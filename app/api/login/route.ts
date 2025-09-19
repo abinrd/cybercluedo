@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 import { users, teamMembers, teams } from '@/supabase/migrations/schema'; 
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
-import { signSession, SESSION_COOKIE, JWT_TTL_SEC } from '@/lib/auth';
+import { signSession, SESSION_COOKIE} from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -43,9 +43,7 @@ export async function POST(req: NextRequest) {
       .select({ name: teams.name })
       .from(teams)
       .where(eq(teams.id, teamRow[0].teamId));
-    console.log('User teams:', teammRow);
     const teamId = teamRow.length > 0 ? teamRow[0].teamId : null;
-    console.log('User name:', teammRow[0]?.name);
     const token = await signSession({
       sub: user.id,
       teamId,
