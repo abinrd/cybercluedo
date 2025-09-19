@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, teamMembers, teams } from '@/supabase/migrations/schema'; // adjust to your actual schema path
+import { users, teamMembers, teams } from '@/supabase/migrations/schema'; 
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { signSession, SESSION_COOKIE, JWT_TTL_SEC } from '@/lib/auth';
@@ -53,14 +53,8 @@ export async function POST(req: NextRequest) {
       role: 'owner', 
     });
 
-    const res = NextResponse.json({ ok: true, userId: user.id }, { status: 200 });
-    res.cookies.set(SESSION_COOKIE, token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: JWT_TTL_SEC,
-    });
+    const res = NextResponse.json({ ok: true, teamId: teamId, name: teammRow[0]?.name, userId: user.id }, { status: 200 });
+    res.cookies.set(SESSION_COOKIE, token);
     return res;
   } catch (err: any) {
     const detail = err?.cause?.message || err?.message || 'Login failed';

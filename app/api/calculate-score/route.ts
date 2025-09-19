@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-
+import { teams } from '@/supabase/migrations/schema';
+import { db } from '@/lib/db';
+import Cookies from 'js-cookie';
+import { eq } from 'drizzle-orm';
 // Correct answers from your environment
 const CORRECT_ANSWERS: Record<number, string> = {
   1: "j.taylor",
@@ -79,17 +82,17 @@ export async function POST(request: NextRequest) {
     // Calculate question score
     let questionScore = 0
     const questionDetails: Record<string, QuestionDetail> = {}
-    
+
     quizAnswers.forEach((answer: QuizAnswer) => {
       const correctAnswer = CORRECT_ANSWERS[answer.questionId]
       // Ensure we always get a boolean value
-      const isCorrect = Boolean(correctAnswer && 
+      const isCorrect = Boolean(correctAnswer &&
         answer.answer.trim().toLowerCase() === correctAnswer.toLowerCase())
-      
+
       if (isCorrect) {
         questionScore += 5
       }
-      
+
       questionDetails[answer.questionId] = {
         correct: isCorrect,
         points: isCorrect ? 5 : 0,
@@ -101,7 +104,7 @@ export async function POST(request: NextRequest) {
     // Calculate evidence score
     let evidenceScore = 0
     const evidenceDetails: Record<string, EvidenceDetail> = {}
-    
+
     // Initialize all evidence as not found
     EVIDENCE_PATTERNS.forEach((pattern, index) => {
       evidenceDetails[index + 1] = {
@@ -110,12 +113,12 @@ export async function POST(request: NextRequest) {
         userInput: ""
       }
     })
-    
+
     // Check which evidence was found using partial matching
     evidenceFound.forEach((userEvidence: string) => {
       let foundMatch = false
       let matchedIndex = -1
-      
+
       // Check if user's evidence matches any pattern
       for (let i = 0; i < EVIDENCE_PATTERNS.length; i++) {
         if (checkEvidenceMatch(userEvidence, EVIDENCE_PATTERNS[i])) {
@@ -124,7 +127,7 @@ export async function POST(request: NextRequest) {
           break
         }
       }
-      
+
       if (foundMatch && matchedIndex !== -1) {
         // Check if this evidence hasn't been found already
         if (!evidenceDetails[matchedIndex + 1].found) {
@@ -140,7 +143,6 @@ export async function POST(request: NextRequest) {
 
     const totalScore = questionScore + evidenceScore;
     const maxPossible = 30 + (EVIDENCE_PATTERNS.length * 10);
-    localStorage.setItem('socca', totalScore.toString());
 
     const response: ScoreResponse = {
       totalScore,
@@ -152,7 +154,31 @@ export async function POST(request: NextRequest) {
         evidence: evidenceDetails
       }
     }
-
+    const teamId = request.cookies.get("teamId")?.value;
+    if (!teamId) {
+      return NextResponse.json({ error: "Missing teamId cookie" }, { status: 400 });
+    }
+    const rows = await db
+      .select({ final: teams.final })
+      .from(teams)
+      .where(eq(teams.id, teamId));
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+    const alreadySubmitted = rows[0].final;
+    const isSubmitted = Number(alreadySubmitted) === 1;
+    if (!isSubmitted) {
+      await db
+        .update(teams)
+        .set({
+          points: totalScore.toString(),
+          final: "1",
+        })
+        .where(eq(teams.id, teamId));
+        await Cookies.set('finalSubmitted', "true");
+    } else {
+      return NextResponse.json({ error: "Progress already submitted" }, { status: 400 });
+    }
     return NextResponse.json(response)
   } catch (error) {
     console.error('Error calculating score:', error)
