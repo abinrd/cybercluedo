@@ -1,21 +1,10 @@
 'use client';
-
-import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
 import AccessDenied from '@/components/AccessDenined';
 import AdminDashboard from '@/components/AdminPage';
 
-function Gate() {
-  const sp = useSearchParams();
-  const code = sp.get('code');
+export const dynamic = 'force-dynamic';
+export default function AdminPage({ searchParams }: { searchParams: { code?: string } }) {
+  const code = searchParams.code ?? null;
   if (code !== 'abinrajuisgreat') return <AccessDenied />;
   return <AdminDashboard />;
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<div />}>
-      <Gate />
-    </Suspense>
-  );
 }
