@@ -125,6 +125,7 @@ export default function AdminDashboard() {
   // const compromisedTeams = teams.filter(t => t.status === 'failed').length
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
+  console.log(code);
   if(code!="abinrajuisgreat") {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 flex items-center justify-center p-4">
