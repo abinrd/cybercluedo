@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, XCircle, Trophy, Star } from "lucide-react"
 import Cookies from "js-cookie";
+
 interface QuizAnswer {
   questionId: number;
   answer: string;
@@ -32,6 +33,14 @@ const quizQuestions = [
   { id: 7, question: "What is the final flag to complete the challenge? format:FLAG{........}"},
 ]
 
+// Storage keys
+const STORAGE_KEYS = {
+  ANSWERS: 'helix_quiz_answers',
+  EVIDENCE: 'helix_quiz_evidence',
+  SUBMITTED: 'helix_quiz_submitted',
+  SCORE_RESULT: 'helix_score_result'
+}
+
 export function QuizBar() {
   const [answers, setAnswers] = useState<string[]>(Array(quizQuestions.length).fill(""))
   const [evidence, setEvidence] = useState<string[]>([""])
@@ -39,13 +48,83 @@ export function QuizBar() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
   const [finalSubmitted, setFinalSubmitted] = useState("")
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const loadPersistedData = () => {
+      try {
+        // Load answers
+        const savedAnswers = localStorage.getItem(STORAGE_KEYS.ANSWERS)
+        if (savedAnswers) {
+          const parsedAnswers = JSON.parse(savedAnswers)
+          if (Array.isArray(parsedAnswers) && parsedAnswers.length === quizQuestions.length) {
+            setAnswers(parsedAnswers)
+          }
+        }
+
+        // Load evidence
+        const savedEvidence = localStorage.getItem(STORAGE_KEYS.EVIDENCE)
+        if (savedEvidence) {
+          const parsedEvidence = JSON.parse(savedEvidence)
+          if (Array.isArray(parsedEvidence) && parsedEvidence.length > 0) {
+            setEvidence(parsedEvidence)
+          }
+        }
+
+        // Load submission status
+        const savedSubmitted = localStorage.getItem(STORAGE_KEYS.SUBMITTED)
+        if (savedSubmitted === 'true') {
+          setSubmitted(true)
+          
+          // Load score result if submitted
+          const savedScoreResult = localStorage.getItem(STORAGE_KEYS.SCORE_RESULT)
+          if (savedScoreResult) {
+            setScoreResult(JSON.parse(savedScoreResult))
+          }
+        }
+
+        // Load cookie status
+        setFinalSubmitted(Cookies.get('finalSubmitted') || "")
+        
+        setIsLoaded(true)
+      } catch (error) {
+        console.error('Error loading persisted data:', error)
+        setIsLoaded(true)
+      }
+    }
+
+    loadPersistedData()
+  }, [])
+
+  // Save answers to localStorage whenever they change
+  useEffect(() => {
+    if (isLoaded && !submitted) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.ANSWERS, JSON.stringify(answers))
+      } catch (error) {
+        console.error('Error saving answers:', error)
+      }
+    }
+  }, [answers, isLoaded, submitted])
+
+  // Save evidence to localStorage whenever it changes
+  useEffect(() => {
+    if (isLoaded && !submitted) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.EVIDENCE, JSON.stringify(evidence))
+      } catch (error) {
+        console.error('Error saving evidence:', error)
+      }
+    }
+  }, [evidence, isLoaded, submitted])
+
+  // Auto-save functionality on input change
   const handleQuizChange = (index: number, value: string) => {
     const newAnswers = [...answers]
     newAnswers[index] = value
     setAnswers(newAnswers)
   }
-
-
 
   const handleEvidenceChange = (index: number, value: string) => {
     const newEvidence = [...evidence]
@@ -64,12 +143,22 @@ export function QuizBar() {
     }
   }
 
+  const clearPersistedData = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.ANSWERS)
+      localStorage.removeItem(STORAGE_KEYS.EVIDENCE)
+      localStorage.removeItem(STORAGE_KEYS.SUBMITTED)
+      localStorage.removeItem(STORAGE_KEYS.SCORE_RESULT)
+    } catch (error) {
+      console.error('Error clearing persisted data:', error)
+    }
+  }
+
   const handleSubmit = async () => {
     if (answers.some(ans => ans.trim() === "")) {
       alert("Please answer all questions before submitting.")
       return
     }
-
 
     setIsSubmitting(true)
     
@@ -96,8 +185,13 @@ export function QuizBar() {
         const result: ScoreResult = await response.json()
         setScoreResult(result)
         setSubmitted(true)
+        
+        // Save to cookie and localStorage
         Cookies.set('finalSubmitted', 'true');
-        setFinalSubmitted(Cookies.get('finalSubmitted')|| " ");
+        localStorage.setItem(STORAGE_KEYS.SUBMITTED, 'true')
+        localStorage.setItem(STORAGE_KEYS.SCORE_RESULT, JSON.stringify(result))
+        
+        setFinalSubmitted('true');
       } else {
         throw new Error('Failed to calculate score')
       }
@@ -106,14 +200,22 @@ export function QuizBar() {
       alert('Error submitting quiz. Please try again.')
     } finally {
       setIsSubmitting(false);
-
     }
   }
-  useEffect(() => {
-    setFinalSubmitted(Cookies.get('finalSubmitted') || "");
-  }, [finalSubmitted]);
+
   const calculatePercentage = (score: number, max: number) => {
     return Math.round((score / max) * 100)
+  }
+
+  // Show loading state while data is being loaded
+  if (!isLoaded) {
+    return (
+      <div className="space-y-6 bg-black/30 p-6 rounded-lg border border-blue-500/30 text-white">
+        <div className="text-center">
+          <p className="text-lg">Loading quiz data...</p>
+        </div>
+      </div>
+    )
   }
 
   if (submitted && scoreResult) {
@@ -174,8 +276,6 @@ export function QuizBar() {
                     )}
                     <div>
                       <p className="font-medium">Q{questionId}: {detail.correct ? "+5" : "0"}</p>
-                      
-  
                     </div>
                   </div>
                 ))}
@@ -184,12 +284,10 @@ export function QuizBar() {
 
             <div>
               <h4 className="font-semibold text-blue-300 mb-2">Evidence Found:</h4>
-
               {(() => {
                 const evidenceEntries = Object.values(scoreResult.details.evidence || {});
                 const foundCount = evidenceEntries.filter(d => d.found).length;
                 const totalCount = evidenceEntries.length;
-                // If detail.points exists use it, otherwise default to 10 per found evidence
                 const totalPoints = evidenceEntries.reduce(
                   (sum, d) => sum + (d.found ? (typeof d.points === "number" ? d.points : 10) : 0),
                   0
@@ -216,7 +314,23 @@ export function QuizBar() {
                 );
               })()}
             </div>
+          </div>
 
+          {/* Option to clear data and start over (for testing purposes) */}
+          <div className="mt-6 pt-4 border-t border-gray-600">
+            <Button
+              onClick={() => {
+                if (confirm('Are you sure you want to clear all data and start over? This cannot be undone.')) {
+                  clearPersistedData()
+                  Cookies.remove('finalSubmitted')
+                  window.location.reload()
+                }
+              }}
+              variant="outline"
+              className="bg-red-900/30 border-red-600 text-white hover:bg-red-800/40"
+            >
+              Clear Data & Start Over
+            </Button>
           </div>
         </div>
       </div>
@@ -229,80 +343,106 @@ export function QuizBar() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-yellow-400 mb-2">You have already submitted the quiz!</h2>
           <p className="text-lg">Thank you for your participation.</p>
+          
+          {/* Option to clear data and start over */}
+          <div className="mt-6">
+            <Button
+              onClick={() => {
+                if (confirm('Are you sure you want to clear all data and start over? This cannot be undone.')) {
+                  clearPersistedData()
+                  Cookies.remove('finalSubmitted')
+                  window.location.reload()
+                }
+              }}
+              variant="outline"
+              className="bg-red-900/30 border-red-600 text-white hover:bg-red-800/40"
+            >
+              Clear Data & Start Over
+            </Button>
+          </div>
         </div>
       ) : (
         <>
-        <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          handleSubmit()
-        }}
-        className="space-y-6"
-      >
-        {/* Quiz Questions */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-bold text-blue-300 border-b border-blue-500 pb-2">Quiz Questions (5 points each)</h3>
-          {quizQuestions.map((q, idx) => (
-            <div key={q.id} className="space-y-2">
-              <p className="font-semibold">
-                Q{q.id}. {q.question}
-              </p>
-              <Input
-                type="text"
-                placeholder="Type your answer..."
-                value={answers[idx]}
-                onChange={(e) => handleQuizChange(idx, e.target.value)}
-                className="bg-gray-800 text-white border-gray-600"
-                required
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Evidence Section */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-bold text-green-300 pb-2">Evidence Found (10 points each)</h3>
-          <p className="text-md font-bold text-green-300 border-b border-green-500 pb-2">(Evidences That Make Your suspect Guilty)</p>
-          <p className="text-sm text-gray-400">Enter evidence you&apos;ve discovered (partial matches accepted)</p>
-          {evidence.map((ev, idx) => (
-            <div key={idx} className="flex gap-2">
-              <Input
-                type="text"
-                placeholder={`Evidence #${idx + 1}`}
-                value={ev}
-                onChange={(e) => handleEvidenceChange(idx, e.target.value)}
-                className="bg-gray-800 text-white border-gray-600"
-              />
-              {evidence.length > 1 && (
-                <Button
-                  type="button"
-                  onClick={() => removeEvidenceField(idx)}
-                  variant="outline"
-                  className="bg-red-900/30 border-red-600 text-white hover:bg-red-800/40"
-                >
-                  Remove
-                </Button>
-              )}
-            </div>
-          ))}
-          <Button
-            type="button"
-            onClick={addEvidenceField}
-            variant="outline"
-            className="w-full bg-green-900/30 border-green-600 text-white hover:bg-green-800/40"
+      
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleSubmit()
+            }}
+            className="space-y-6"
           >
-            ➕ Add More Evidence
-          </Button>
-        </div>
+            {/* Quiz Questions */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-blue-300 border-b border-blue-500 pb-2">Quiz Questions (5 points each)</h3>
+              {quizQuestions.map((q, idx) => (
+                <div key={q.id} className="space-y-2">
+                  <p className="font-semibold">
+                    Q{q.id}. {q.question}
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="Type your answer..."
+                    value={answers[idx]}
+                    onChange={(e) => handleQuizChange(idx, e.target.value)}
+                    className="bg-gray-800 text-white border-gray-600"
+                    required
+                  />
+                </div>
+              ))}
+            </div>
 
-        <Button 
-          type="submit" 
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Calculating Score..." : "Submit Quiz & Evidence"}
-        </Button>
-      </form>
+            {/* Evidence Section */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-green-300 pb-2">Evidence Found (10 points each)</h3>
+              <p className="text-md font-bold text-green-300 border-b border-green-500 pb-2">(Evidences That Make Your suspect Guilty)</p>
+              <p className="text-sm text-gray-400">Enter evidence you&apos;ve discovered (partial matches accepted)</p>
+              {evidence.map((ev, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder={`Evidence #${idx + 1}`}
+                    value={ev}
+                    onChange={(e) => handleEvidenceChange(idx, e.target.value)}
+                    className="bg-gray-800 text-white border-gray-600"
+                  />
+                  {evidence.length > 1 && (
+                    <Button
+                      type="button"
+                      onClick={() => removeEvidenceField(idx)}
+                      variant="outline"
+                      className="bg-red-900/30 border-red-600 text-white hover:bg-red-800/40"
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                type="button"
+                onClick={addEvidenceField}
+                variant="outline"
+                className="w-full bg-green-900/30 border-green-600 text-white hover:bg-green-800/40"
+              >
+                ➕ Add More Evidence
+              </Button>
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Calculating Score..." : "Submit Quiz & Evidence"}
+            </Button>
+          </form>
+
+          {/* Progress indicator */}
+          <div className="mt-4 p-3 bg-blue-900/30 border border-blue-600 rounded-lg">
+            <p className="text-sm text-blue-300">
+              📊 <strong>Progress:</strong> {answers.filter(a => a.trim() !== "").length}/{quizQuestions.length} questions answered, 
+              {evidence.filter(e => e.trim() !== "").length} evidence entries
+            </p>
+          </div>
         </>
       )}
     </div>
