@@ -315,23 +315,6 @@ export function QuizBar() {
               })()}
             </div>
           </div>
-
-          {/* Option to clear data and start over (for testing purposes) */}
-          <div className="mt-6 pt-4 border-t border-gray-600">
-            <Button
-              onClick={() => {
-                if (confirm('Are you sure you want to clear all data and start over? This cannot be undone.')) {
-                  clearPersistedData()
-                  Cookies.remove('finalSubmitted')
-                  window.location.reload()
-                }
-              }}
-              variant="outline"
-              className="bg-red-900/30 border-red-600 text-white hover:bg-red-800/40"
-            >
-              Clear Data & Start Over
-            </Button>
-          </div>
         </div>
       </div>
     )
@@ -344,22 +327,6 @@ export function QuizBar() {
           <h2 className="text-2xl font-bold text-yellow-400 mb-2">You have already submitted the quiz!</h2>
           <p className="text-lg">Thank you for your participation.</p>
           
-          {/* Option to clear data and start over */}
-          <div className="mt-6">
-            <Button
-              onClick={() => {
-                if (confirm('Are you sure you want to clear all data and start over? This cannot be undone.')) {
-                  clearPersistedData()
-                  Cookies.remove('finalSubmitted')
-                  window.location.reload()
-                }
-              }}
-              variant="outline"
-              className="bg-red-900/30 border-red-600 text-white hover:bg-red-800/40"
-            >
-              Clear Data & Start Over
-            </Button>
-          </div>
         </div>
       ) : (
         <>
